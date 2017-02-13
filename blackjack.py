@@ -1,8 +1,4 @@
-# TODO:
-# Fix bug where game doesnt reset properly due to uncleaned array
-
 from lib import * 
-import os
 
 used_cards = []
 player = Player()
@@ -16,11 +12,10 @@ while player.cash >= 10:
 	response = get_yes_no()
 	if response:
 		os.system('clear')
-		used_cards = []
-		player.hands = []
-		dealer.dealer_hands = []
+		game_reset(used_cards, player, dealer)
 		continue
 	else:
+		os.system('clear')
 		print("Thank you for playing!")
-		print("Final cash: %d" % player.cash)
+		print("Final cash: $%d" % player.cash)
 		quit()

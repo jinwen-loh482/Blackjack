@@ -1,8 +1,5 @@
 from random import randint, choice
-
-# TODO:
-# Finish game mechanics
-## Allow user to draw cards up to the amount they wish, as long as power <= 21
+import os
 
 class Cards(object):
 	suit_name = ["Diamonds", "Clubs", "Hearts", "Spades"]
@@ -100,9 +97,10 @@ class Player():
 
 	def bet(self):
 		print("How much do you want to bet?")
-		print("Cash: %s" % self.cash)
+		print("Cash: $%s" % self.cash)
 		self.bet_menu()
 		self.bet_amount = self.bet_choice_mapper(self.get_bet_choice())
+		os.system('clear')
 
 	def draw_another(self, index):
 		print("")
@@ -118,6 +116,7 @@ class Player():
 			print("Blackjack!")
 			return False
 		print("Do you want to keep drawing for the current hand?")
+		print("--Current hand--")
 		self.hands[index].print_hand()
 		self.hands[index].print_hand_power()
 		response = get_yes_no()
@@ -128,6 +127,7 @@ class Player():
 			response = self.draw_another(i)
 			while response and self.hands[i].power < 21:
 				self.draw_v2(used_cards, self.hands, i)
+				os.system('clear')
 				response = self.draw_another(i)
 			continue
 
@@ -262,32 +262,36 @@ def print_first_hand(hands):
 
 def check_win(Player, Dealer):
 	for i in range(0, len(Player.hands)):
-		if win_or_bust(Player.hands[i].power) == 0:
-			if i == (len(Player.hands) - 1):
-				print("You lost!\n")
-				Player.cash -= Player.bet_amount
-			continue
-		elif win_or_bust(Player.hands[i].power) == 1:
-			print("You won!\n")
-			Player.cash += Player.bet_amount
-			break
-		elif win_or_bust(Player.hands[i].power) > win_or_bust(Dealer.dealer_hands[0].power):
+		if win_or_bust(Player.hands[i].power) > win_or_bust(Dealer.dealer_hands[0].power):
 			if win_or_bust(Dealer.dealer_hands[0].power) == 1:
-				print("You lost!\n")
-				Player.cash -= Player.bet_amount
+				if i == (len(Player.hands) - 1):
+					print("You lost!\n")
+					Player.cash -= Player.bet_amount
+				continue
 			else:
 				print("You won!\n")
 				Player.cash += Player.bet_amount
+			break
+		elif win_or_bust(Player.hands[i].power) == 1:
+			print("You won!\n")
+			Player.cash += Player.bet_amount
 			break
 		elif win_or_bust(Player.hands[i].power) < win_or_bust(Dealer.dealer_hands[0].power):
 			if i == (len(Player.hands) - 1):
 				print("You lost!\n")
 				Player.cash -= Player.bet_amount
 			continue
+		elif win_or_bust(Player.hands[i].power) == 0:
+			if i == (len(Player.hands) - 1):
+				if win_or_bust(Dealer.dealer_hands[0].power) == 0:
+					print("Draw!\n")
+				else:
+					print("You lost!\n")
+					Player.cash -= Player.bet_amount
+			continue
 		else:
 			if i == (len(Player.hands) - 1):
 				print("Draw!\n")
-				Player.bet_amount = 0
 			continue
 	print("--Dealer's hand--") 
 	Dealer.dealer_hands[0].print_hand()
@@ -306,6 +310,8 @@ def initialize_game(used_cards, Player, Dealer):
 		Player.hands[0].print_hand_power()  
 
 def game_reset(used_cards, Player, Dealer):
-	used_cards = []
-	Player.hands = []
-	Dealer.dealer_hands = []
+	used_cards.clear()
+	Player.hands.clear()
+	Dealer.dealer_hands.clear()
+	Player.hands = [Deck()]
+	Dealer.dealer_hands = [Deck()]
