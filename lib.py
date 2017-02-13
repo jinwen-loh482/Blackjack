@@ -88,6 +88,10 @@ class Player():
 		self.bet_amount = self.bet_choice_mapper(self.get_bet_choice())
 		self.cash -= self.bet_amount
 
+	def draw_sequence(self):
+		print_first_hand(self.hands)
+		print("Do you want to keep drawing?")
+
 class Dealer():
 	def __init__(self):
 		self.dealer_hands = [Deck()]
@@ -232,6 +236,9 @@ def check_win(Player, Dealer):
 				print("Draw!")
 				Player.bet_amount = 0
 			continue 
+
+def draw_sequence(Player):
+	
 
 def initialize_game(used_cards, Player, Dealer):
 	draw(used_cards, Player.hands)
