@@ -43,6 +43,14 @@ class Deck(object):
 		total_power = maximize_ace_power(total_power, ace_count)
 		self.power = total_power
 
+	def print_hand_power(self):
+		self.get_hand_power()
+		print("Hand power: %d\n" % self.power)
+
+	def print_hand(self):
+		for i in range(0, len(self.hand)):
+			print(self.hand[i].card_chosen_human())
+
 	def maximize_ace_power(self, current_power, ace_count):
 		for i in range(0, ace_count):
 			if (current_power + 11) < 21:
@@ -66,15 +74,24 @@ class Player():
 		print("3 - $100")
 
 	def bet_choice_mapper(self, choice):
-		if choice == 1:
-			return 10
+		if choice == 3:
+			if self.cash >= 100:
+				return 100
+			elif self.cash >= 50:
+				print("Insufficient funds! Betting 50$.")
+			else:
+				print("Insufficient funds! Betting 10$.")
 		elif choice == 2:
-			return 50
-		return 100
+			if self.cash >= 50:
+				return 50
+			else:
+				print("Insufficient funds! Betting 10$.")
+		return 10
 
 	def get_bet_choice(self):
 		try:
 			choice = int(input("Response: "))
+			print("")
 			if choice < 1 or choice > 3:
 				return self.get_bet_choice()
 			return choice
@@ -86,11 +103,48 @@ class Player():
 		print("Cash: %s" % self.cash)
 		self.bet_menu()
 		self.bet_amount = self.bet_choice_mapper(self.get_bet_choice())
-		self.cash -= self.bet_amount
 
-	def draw_sequence(self):
-		print_first_hand(self.hands)
-		print("Do you want to keep drawing?")
+	def draw_another(self, index):
+		print("")
+		self.hands[index].get_hand_power()
+		if self.hands[index].power > 21:
+			self.hands[index].print_hand()
+			self.hands[index].print_hand_power()
+			print("Bust!\n")
+			return False
+		elif self.hands[index].power == 21:
+			self.hands[index].print_hand()
+			self.hands[index].print_hand_power()
+			print("Blackjack!")
+			return False
+		print("Do you want to keep drawing for the current hand?")
+		self.hands[index].print_hand()
+		self.hands[index].print_hand_power()
+		response = get_yes_no()
+		return response
+
+	def draw_sequence(self, used_cards):
+		for i in range(0, len(self.hands)):
+			response = self.draw_another(i)
+			while response and self.hands[i].power < 21:
+				self.draw_v2(used_cards, self.hands, i)
+				response = self.draw_another(i)
+			continue
+
+	def draw_v2(self, used_cards, hands, index):
+		count = 1
+		repeat_flag = False
+		while count == 1 or repeat_flag:
+			if len(used_cards) == 52:
+				print("You have drawn all cards!")
+				break
+			card = Cards(pick_suit(), pick_rank())
+			repeat_flag = check_card_machine(used_cards, card)
+			if repeat_flag:
+				continue
+			collect_used_cards(used_cards, card)
+			hands[index].add_to_hand(card)
+			count -= 1
 
 class Dealer():
 	def __init__(self):
@@ -101,6 +155,7 @@ class Dealer():
 		draw(used_cards, self.dealer_hands)
 		print("--Dealer's first card--")
 		print(self.dealer_hands[0].hand[0].card_chosen_human())
+		print("")
 		self.dealer_AI(used_cards)
 
 	def dealer_AI(self, used_cards):
@@ -110,7 +165,8 @@ class Dealer():
 			self.dealer_hands[0].get_hand_power()
 
 	def print_dealer_hand(self):
-		for i in range 
+		for i in range(0, len(self.dealer_hands[0].hand)):
+			print("%s\n" % self.dealer_hands[0].hand.card_chosen_human())
 
 def get_yes_no():
 	try:
@@ -118,9 +174,7 @@ def get_yes_no():
 		while response != 1 and response != 0:
 			response = int(input("Response(1 for yes, 0 for no): "))
 		if response == 1:
-			print("")
 			return True
-		print("")
 		return False
 	except ValueError:
 		return get_yes_no()
@@ -206,49 +260,52 @@ def print_first_hand(hands):
 	for i in range(0, len(hands[0].hand)):
 		print(hands[0].hand[i].card_chosen_human())
 
-def print_power(hands):
-	hands[0].get_hand_power()
-	print("Total power: %d" % hands[0].power)
-	print("")
-
 def check_win(Player, Dealer):
 	for i in range(0, len(Player.hands)):
 		if win_or_bust(Player.hands[i].power) == 0:
 			if i == (len(Player.hands) - 1):
-				print("You lost!")
+				print("You lost!\n")
 				Player.cash -= Player.bet_amount
 			continue
 		elif win_or_bust(Player.hands[i].power) == 1:
-			print("You won!")
+			print("You won!\n")
 			Player.cash += Player.bet_amount
 			break
 		elif win_or_bust(Player.hands[i].power) > win_or_bust(Dealer.dealer_hands[0].power):
-			print("You won!")
-			Player.cash += Player.bet_amount
+			if win_or_bust(Dealer.dealer_hands[0].power) == 1:
+				print("You lost!\n")
+				Player.cash -= Player.bet_amount
+			else:
+				print("You won!\n")
+				Player.cash += Player.bet_amount
 			break
 		elif win_or_bust(Player.hands[i].power) < win_or_bust(Dealer.dealer_hands[0].power):
 			if i == (len(Player.hands) - 1):
-				print("You lost!")
+				print("You lost!\n")
 				Player.cash -= Player.bet_amount
 			continue
 		else:
 			if i == (len(Player.hands) - 1):
-				print("Draw!")
+				print("Draw!\n")
 				Player.bet_amount = 0
-			continue 
-
-def draw_sequence(Player):
-	
+			continue
+	print("--Dealer's hand--") 
+	Dealer.dealer_hands[0].print_hand()
+	Dealer.dealer_hands[0].print_hand_power()
+	print("Current cash: %d\n" % Player.cash)
 
 def initialize_game(used_cards, Player, Dealer):
 	draw(used_cards, Player.hands)
 	draw(used_cards, Player.hands)
-	if check_split(Player.hands[0]) != 0:
-		print_first_hand(Player.hands)
-		print("")
-		split_hand(Player.hands)
-		return
 	print_first_hand(Player.hands)
-	print("")
+	Player.hands[0].print_hand_power()
 	Dealer.dealer_init(used_cards)
-	print("")
+	if check_split(Player.hands[0]) != 0:
+		split_hand(Player.hands)
+		print_first_hand(Player.hands)
+		Player.hands[0].print_hand_power()  
+
+def game_reset(used_cards, Player, Dealer):
+	used_cards = []
+	Player.hands = []
+	Dealer.dealer_hands = []
